@@ -12,7 +12,7 @@ class Beziertool{
         this.context.fillStyle = color || 'rgba(0,0,0,1)';
         this.bezierCurves = []; // keep track of all curves drawn on canvas
         this.allPoints = [];  //keep track of all points drawn on canvas
-        this.selectedCurve; // keep track of curve that is manipulated by dragging its points
+        this.selectedCurve = null; // keep track of curve that is manipulated by dragging its points
 
         // some helpfull variables
         this.isSecondPoint = false; // flag if next point added to canvas will be seconPoint of a curve
@@ -143,7 +143,7 @@ class Beziertool{
         };
 
     }
-};
+}
 
 class Point {
     constructor(x, y){
@@ -174,7 +174,7 @@ class Point {
             return xIntersect && yIntersect;
         };
     }
-};
+}
 
 class CubicBezierCurve {
     constructor(start, end, ctrl1, ctrl2){
@@ -186,7 +186,7 @@ class CubicBezierCurve {
         this.end = end; // end point
         this.ctrl1 = ctrl1; // control point for start point
         this.ctrl2 = ctrl2; // control point for end point
-        this.selectedPoint; // keep track of a selected Point
+        this.selectedPoint = null; // keep track of a selected Point
         this.saved = false; // saved curves can no longer be modified and their control points will be hidden
 
         // draw curve on canvas: draw squares around all existing points and lines
@@ -196,15 +196,14 @@ class CubicBezierCurve {
         this.drawCurve = function(context){
             if (self.saved){ // curve is saved it should be drawn transparent
                 context.save();
-                context.globalAlpha = 0.2;
+                context.globalAlpha = 0.4;
             }
             if (self.start){
                 self.start.drawSquare(context);
             }
             if (self.ctrl1 && !self.saved){ // if curve is saved do not draw control points
                 context.save();
-                context.fillStyle = 'gray';
-                context.strokeStyle = 'gray';
+                context.globalAlpha = 0.4;
                 context.beginPath();
                 context.moveTo(self.start.x, self.start.y);
                 context.lineTo(self.ctrl1.x, self.ctrl1.y);
@@ -217,8 +216,7 @@ class CubicBezierCurve {
             }
             if (self.ctrl2 && !self.saved){ // if curve is saved do not draw control points
                 context.save();
-                context.fillStyle = 'gray';
-                context.strokeStyle = 'gray';
+                context.globalAlpha = 0.4;
                 context.beginPath();
                 context.moveTo(self.end.x, self.end.y);
                 context.lineTo(self.ctrl2.x, self.ctrl2.y);
