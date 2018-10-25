@@ -104,6 +104,25 @@ class Beziertool{
             self.render();
         };
 
+        this.deleteLatestPoint = function(){
+            if (self.bezierCurves.length > 0){ // are there any curves
+                // get the curve added last 
+                var lastCurve = self.bezierCurves[self.bezierCurves.length - 1];
+                if (lastCurve.end){ // curve has an ending point
+                    // remove ending point and the control points
+                    lastCurve.end = null;
+                    lastCurve.ctrl1 = null;
+                    lastCurve.ctrl2 = null;
+                    self.isSecondPoint = true;
+                } else { // curve has only a starting point
+                    // remove entire curve
+                    self.bezierCurves.pop();
+                    self.isSecondPoint = false;
+                }
+                // since curves changed render everything
+                self.render();
+            }
+        };
     }
 };
 

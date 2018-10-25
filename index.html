@@ -9,9 +9,24 @@
     <div id="containter">
         <canvas id="canvas"style="border: 1px solid black;"></canvas>
     </div>
+    <div id="buttonContainer">
+        <button type="button" id="undoLastPoint">Undo Latest Point</button>
+    </div>
     <script language="JavaScript">
-        var canvas = document.getElementById('canvas');
-        var beziertool = new Beziertool(canvas);
+
+     function bindEventListeners(){
+         var canvas = document.getElementById('canvas');
+         var beziertool = new Beziertool(canvas);
+         var undoButton = document.getElementById('undoLastPoint');
+         undoButton.addEventListener("click", function(){
+             beziertool.deleteLatestPoint();
+         });
+     }
+     document.onreadystatechange = function(){
+         if(document.readyState === 'complete'){
+             bindEventListeners();
+         }
+     }
     </script>
 </body>
 </html>
