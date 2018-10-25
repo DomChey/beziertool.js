@@ -11,6 +11,7 @@
     </div>
     <div id="buttonContainer">
         <button type="button" id="undoLastPoint">Undo Latest Point</button>
+        <button type="button" id="saveCurves">Save Unsaved Curves"</button>
     </div>
     <script language="JavaScript">
 
@@ -20,6 +21,10 @@
          var undoButton = document.getElementById('undoLastPoint');
          undoButton.addEventListener("click", function(){
              beziertool.deleteLatestPoint();
+         });
+         var saveButton = document.getElementById('saveCurves');
+         saveButton.addEventListener("click", function(){
+             beziertool.saveAllUnsavedCurves();
          });
      }
      document.onreadystatechange = function(){
