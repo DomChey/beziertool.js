@@ -9,6 +9,7 @@ class Beziertool{
         this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
         this.context = canvas.getContext('2d'); 
         this.context.strokeStyle = color || 'rgba(0,0,0,1)'; //default color black
+        this.context.fillStyle = color || 'rgba(0,0,0,1)';
         this.bezierCurves = []; // keep track of all curves drawn on canvas
         this.allPoints = [];  //keep track of all points drawn on canvas
         this.selectedCurve; // keep track of curve that is manipulated by dragging its points
