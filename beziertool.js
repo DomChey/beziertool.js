@@ -32,27 +32,12 @@ class Beziertool{
         // when user presses left mousebutton either a new point is added or if there
         // is a point at this location this point is marked as selected and can now be moved
         this.handleMouseDown = function(event){
-            self.mouseDown = true;
-            var pt = self.getCursorPosition(event);
-            if (self.isPointSelected(pt)) { // clicked on an existing point, so it should move
-                self.moving = true;
-                //TODO moving stuff
-            } else { // add new point
-                self.moving = false;
-                if (!self.isSecondPoint){ // starting Point of a new curve
-                    var curve = new CubicBezierCurve();
-                    curve.setStart(pt);
-                    curve.drawCurve(self.context);
-                    self.bezierCurves.push(curve);
-                    self.isSecondPoint = !self.isSecondPoint;
-                }else { // ending point of current curve
-                    var currCurve = self.bezierCurves[self.bezierCurves.length - 1];
-                    currCurve.setEnd(pt);
-                    currCurve.setCtrl1(new Point(currCurve.start.x-10, currCurve.start.y-10));
-                    currCurve.setCtrl2(new Point(pt.x+10, pt.y+10));
-                    currCurve.drawCurve(self.context);
-                    self.isSecondPoint = !self.isSecondPoint;
-                }
+            switch (event.which) {
+            case 1: // left button was pressed
+                self.handleLeftButtonDown(event);
+                break;
+            case 3: // right button was pressed
+                self.handleRightButtonDown(event);
             }
         };
 
@@ -75,10 +60,38 @@ class Beziertool{
             }
         };
 
+        // if left button was clicked add a new point and if it was the second point
+        // draw a new Bezier curve
+        this.handleLeftButtonDown = function(event){
+            var pt = self.getCursorPosition(event);
+            if (!self.isSecondPoint){ // starting Point of a new curve
+                var curve = new CubicBezierCurve();
+                curve.setStart(pt);
+                curve.drawCurve(self.context);
+                self.bezierCurves.push(curve);
+            }else { // ending point of current curve
+                var currCurve = self.bezierCurves[self.bezierCurves.length - 1];
+                currCurve.setEnd(pt);
+                currCurve.setCtrl1(new Point(currCurve.start.x-10, currCurve.start.y-10));
+                currCurve.setCtrl2(new Point(pt.x+10, pt.y+10));
+                currCurve.drawCurve(self.context);
+            }
+            self.isSecondPoint = !self.isSecondPoint;
+        };
+
+        // Is user rightclicked onto an existing point this point should move
+        this.handleRightButtonDown = function(event){
+            var pt = self.getCursorPosition(event);
+            if (self.isPointSelected(pt)) { // clicked on an existing point, so it should move
+                self.moving = true;
+            }
+        };
+
         // add eventlisteners to canvas
         this.canvas.addEventListener("mousedown", this.handleMouseDown, false);
         this.canvas.addEventListener("mousemove", this.handleMouseMove, false);
         this.canvas.addEventListener("mouseup", this.handleMouseUp, false);
+        this.canvas.addEventListener("contextmenu", event => event.preventDefault()); // prevent opening of contextmenu when rigthclicking on canvas
 
         // clear the canvas
         this.clear = function(){
@@ -93,9 +106,10 @@ class Beziertool{
             }
         };
 
-        // is there a point at the location currently clicked on?
+        // is there a point at the location currently clicked on? And if so mark this point
+        // and the curve it belongs to as selected 
         this.isPointSelected = function(point){
-            for (var i = 0; i < self.bezierCurves.length; i++){
+            for (var i = self.bezierCurves.length -1 ; i >= 0; i--){ // start from end of bezierCurves so the points added later are on top of older points
                 if (self.bezierCurves[i].contains(point)){
                     self.selectedCurve = self.bezierCurves[i];
                     return true;
@@ -155,6 +169,7 @@ class Point {
         this.y = y;
 
         this.RADIUS = 3;
+        this.SELECT_RADIUS = this.RADIUS + 2;
 
         // give point new coordinates
         this.set = function(x, y){
@@ -169,8 +184,8 @@ class Point {
 
         // does user clicked on a point?
         this.intersect = function(point){
-            var xIntersect = point.x >= self.x - self.RADIUS && point.x <= self.x + self.RADIUS;
-            var yIntersect = point.y >= self.y - self.RADIUS && point.y <= self.y + self.RADIUS;
+            var xIntersect = point.x >= self.x - self.SELECT_RADIUS && point.x <= self.x + self.SELECT_RADIUS;
+            var yIntersect = point.y >= self.y - self.SELECT_RADIUS && point.y <= self.y + self.SELECT_RADIUS;
             return xIntersect && yIntersect;
         };
     }
