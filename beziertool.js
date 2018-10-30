@@ -62,7 +62,7 @@ class Beziertool{
 
         // if left button was clicked add a new point and if it was the second point
         // draw a new Bezier curve
-        this.handleLeftButtonDown = function(event){
+        this.handleRightButtonDown = function(event){
             var pt = self.getCursorPosition(event);
             if (!self.isSecondPoint){ // starting Point of a new curve
                 var curve = new CubicBezierCurve();
@@ -80,7 +80,7 @@ class Beziertool{
         };
 
         // Is user rightclicked onto an existing point this point should move
-        this.handleRightButtonDown = function(event){
+        this.handleLeftButtonDown = function(event){
             var pt = self.getCursorPosition(event);
             if (self.isPointSelected(pt)) { // clicked on an existing point, so it should move
                 self.moving = true;
