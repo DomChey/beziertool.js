@@ -12,11 +12,10 @@ class Beziertool{
         this.context.fillStyle = color || 'rgba(0,0,0,1)';
         this.bezierCurves = []; // keep track of all curves drawn on canvas
         this.allPoints = [];  //keep track of all points drawn on canvas
-        this.selectedCurve = null; // keep track of curve that is manipulated by dragging its points
+        this.selectedCurves = []; // keep track of curves that are manipulated by dragging their points
 
         // some helpfull variables
         this.isSecondPoint = false; // flag if next point added to canvas will be seconPoint of a curve
-        this.mouseDown = false; // flag if mouse is currently pressed
         this.moving = false; //flag if mouse is currently moving
 
         // calculate position of cursor relative to canvas
@@ -53,17 +52,26 @@ class Beziertool{
         //when user releases left mouse button selected point is unselected
         this.handleMouseUp = function(event){
             self.moving = false;
-            self.mouseDown = false;
-            if (self.selectedCurve){
-                self.selectedCurve.selectedPoint = null;
-                self.selectedCurve = null;
+            if (self.selectedCurves.length > 0){
+                for (var i = 0; i < self.selectedCurves.length; i ++){
+                    self.selectedCurves[i].selectedPoint = null;
+                }
+                self.selectedCurves = [];
             }
         };
 
-        // if left button was clicked add a new point and if it was the second point
+        // if right button was clicked add a new point and if it was the second point
         // draw a new Bezier curve
         this.handleRightButtonDown = function(event){
             var pt = self.getCursorPosition(event);
+            if (self.startOrEndSelected(pt)){ // clicked onto already existing start or end point of another curve
+                // give new point exact same coordinates as selected point to avoid inaccuracies
+                pt.x = self.selectedCurve.selectedPoint.x;
+                pt.y = self.selectedCurve.selectedPoint.y;
+                // now deselect curve
+                self.selectedCurve.selectedPoint = null;
+                self.selectedCurve = null;
+            }
             if (!self.isSecondPoint){ // starting Point of a new curve
                 var curve = new CubicBezierCurve();
                 curve.setStart(pt);
@@ -86,7 +94,7 @@ class Beziertool{
             self.isSecondPoint = !self.isSecondPoint;
         };
 
-        // Is user rightclicked onto an existing point this point should move
+        // If user clicked onto an existing point this point should move
         this.handleLeftButtonDown = function(event){
             var pt = self.getCursorPosition(event);
             if (self.isPointSelected(pt)) { // clicked on an existing point, so it should move
@@ -126,6 +134,22 @@ class Beziertool{
         this.isPointSelected = function(point){
             for (var i = self.bezierCurves.length -1 ; i >= 0; i--){ // start from end of bezierCurves so the points added later are on top of older points
                 if (self.bezierCurves[i].contains(point)){
+                    // since different curves share points add all curves whose points were selected
+                    self.selectedCurves.push(self.bezierCurves[i]);
+                }
+            }
+            if (self.selectedCurves.length > 0){ // are there any selected curves?
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        // check if user clicked on existing start or end point of a curve as a new start or end point
+        // for a new curve and if so mark this point and the curve it belongs to as selected
+        this.startOrEndSelected = function(point){
+            for (var i = 0; i < self.bezierCurves.length; i++){
+                if (self.bezierCurves[i].startOrEndClicked(point)){
                     self.selectedCurve = self.bezierCurves[i];
                     return true;
                 }
@@ -135,7 +159,9 @@ class Beziertool{
 
         // if selected point is moved around update its coordinates and redraw the canvas
         this.updateSelectedPoint = function(newPos){
-            self.selectedCurve.updateSelectedPoint(newPos);
+            for (var i = 0; i < self.selectedCurves.length; i++){
+                self.selectedCurves[i].updateSelectedPoint(newPos);
+            }
             self.render();
         };
 
@@ -300,6 +326,22 @@ class CubicBezierCurve {
                 return true;
             } else if (self.ctrl2 && self.ctrl2.intersect(point)){
                 self.selectedPoint = self.ctrl2;
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        // does user clicked on start or end point of the curve?
+        this.startOrEndClicked = function(point){
+            if (self.saved){ // curve is saved it can no longer be selected
+                return false;
+            }
+            if(self.start && self.start.intersect(point)){
+                self.selectedPoint = self.start;
+                return true;
+            } else if (self.end && self.end.intersect(point)){
+                self.selectedPoint = self.end;
                 return true;
             } else {
                 return false;
