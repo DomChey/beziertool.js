@@ -6,7 +6,7 @@ class Beziertool{
         this.canvas = canvas;
         this.canvas.width = width || 500; // default width 500
         this.canvas.height = height || 500; // default height 500
-        this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
+      //  this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
         this.context = canvas.getContext('2d'); 
         this.context.strokeStyle = color || 'rgba(0,0,0,1)'; //default color black
         this.context.fillStyle = color || 'rgba(0,0,0,1)';
@@ -66,11 +66,11 @@ class Beziertool{
             var pt = self.getCursorPosition(event);
             if (self.startOrEndSelected(pt)){ // clicked onto already existing start or end point of another curve
                 // give new point exact same coordinates as selected point to avoid inaccuracies
-                pt.x = self.selectedCurve.selectedPoint.x;
-                pt.y = self.selectedCurve.selectedPoint.y;
+                pt.x = self.selectedCurves[self.selectedCurves.length -1].selectedPoint.x;
+                pt.y = self.selectedCurves[self.selectedCurves.length -1].selectedPoint.y;
                 // now deselect curve
-                self.selectedCurve.selectedPoint = null;
-                self.selectedCurve = null;
+                self.selectedCurves[self.selectedCurves.length -1].selectedPoint = null;
+                self.selectedCurves = [];
             }
             if (!self.isSecondPoint){ // starting Point of a new curve
                 var curve = new CubicBezierCurve();
@@ -150,7 +150,7 @@ class Beziertool{
         this.startOrEndSelected = function(point){
             for (var i = 0; i < self.bezierCurves.length; i++){
                 if (self.bezierCurves[i].startOrEndClicked(point)){
-                    self.selectedCurve = self.bezierCurves[i];
+                    self.selectedCurves.push(self.bezierCurves[i]);
                     return true;
                 }
             }
@@ -210,7 +210,7 @@ class Point {
         this.y = y;
 
         this.RADIUS = 3;
-        this.SELECT_RADIUS = this.RADIUS + 2;
+        this.SELECT_RADIUS = this.RADIUS;
 
         // give point new coordinates
         this.set = function(x, y){
