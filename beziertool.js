@@ -72,8 +72,15 @@ class Beziertool{
             }else { // ending point of current curve
                 var currCurve = self.bezierCurves[self.bezierCurves.length - 1];
                 currCurve.setEnd(pt);
-                currCurve.setCtrl1(new Point(currCurve.start.x-10, currCurve.start.y-10));
-                currCurve.setCtrl2(new Point(pt.x+10, pt.y+10));
+                // calculate vector pointing from start to end 
+                var delta = self.calculateDelta(currCurve.start, currCurve.end);
+                // scale vector lenght
+                var scale = 10;
+                // shift control points along a straight line between start end end of curve so curve is initally a line
+                var ctrl1 = new Point((currCurve.start.x - delta.x * scale), (currCurve.start.y - delta.y * scale));
+                var ctrl2 = new Point((currCurve.end.x + delta.x * scale), (currCurve.end.y + delta.y * scale));
+                currCurve.setCtrl1(ctrl1);
+                currCurve.setCtrl2(ctrl2);
                 currCurve.drawCurve(self.context);
             }
             self.isSecondPoint = !self.isSecondPoint;
@@ -92,6 +99,14 @@ class Beziertool{
         this.canvas.addEventListener("mousemove", this.handleMouseMove, false);
         this.canvas.addEventListener("mouseup", this.handleMouseUp, false);
         this.canvas.addEventListener("contextmenu", event => event.preventDefault()); // prevent opening of contextmenu when rigthclicking on canvas
+
+        // calculate a vector along the line from start to end point and normalize it 
+        this.calculateDelta = function(startPt, endPt){
+            var DeltaX = endPt.x - startPt.x;
+            var DeltaY = endPt.y - startPt.y;
+            var DeltaLength = Math.sqrt(Math.pow(DeltaX, 2) + Math.pow(DeltaY, 2));
+            return new Point((DeltaX/DeltaLength), (DeltaY/DeltaLength));
+        };
 
         // clear the canvas
         this.clear = function(){
