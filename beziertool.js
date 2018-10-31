@@ -6,10 +6,11 @@ class Beziertool{
         this.canvas = canvas;
         this.canvas.width = width || 500; // default width 500
         this.canvas.height = height || 500; // default height 500
-      //  this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
+        this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
         this.context = canvas.getContext('2d'); 
         this.context.strokeStyle = color || 'rgba(0,0,0,1)'; //default color black
         this.context.fillStyle = color || 'rgba(0,0,0,1)';
+        this.context.lineWidth = 2;
         this.bezierCurves = []; // keep track of all curves drawn on canvas
         this.allPoints = [];  //keep track of all points drawn on canvas
         this.selectedCurves = []; // keep track of curves that are manipulated by dragging their points
@@ -63,6 +64,12 @@ class Beziertool{
         // if right button was clicked add a new point and if it was the second point
         // draw a new Bezier curve
         this.handleRightButtonDown = function(event){
+            // first deactivate all curves -> hide their control points
+            for (var i = 0; i < self.bezierCurves.length; i++){
+                self.bezierCurves[i].deactivate();
+            }
+            // curves changed so render
+            self.render();
             var pt = self.getCursorPosition(event);
             if (self.startOrEndSelected(pt)){ // clicked onto already existing start or end point of another curve
                 // give new point exact same coordinates as selected point to avoid inaccuracies
@@ -90,6 +97,7 @@ class Beziertool{
                 currCurve.setCtrl1(ctrl1);
                 currCurve.setCtrl2(ctrl2);
                 currCurve.drawCurve(self.context);
+                currCurve.createPath();
             }
             self.isSecondPoint = !self.isSecondPoint;
         };
@@ -97,6 +105,7 @@ class Beziertool{
         // If user clicked onto an existing point this point should move
         this.handleLeftButtonDown = function(event){
             var pt = self.getCursorPosition(event);
+            self.curveClicked(pt);
             if (self.isPointSelected(pt)) { // clicked on an existing point, so it should move
                 self.moving = true;
             }
@@ -155,6 +164,16 @@ class Beziertool{
                 }
             }
             return false;
+        };
+
+        // check if user clicked on the line of a curve and if he did active state of
+        // this curve is toggled
+        this.curveClicked = function(point){
+            for (var i = 0; i < self.bezierCurves.length; i++){
+                self.bezierCurves[i].curveClicked(point, self.context);
+            }
+            // rerender since state of curve changed
+            self.render();
         };
 
         // if selected point is moved around update its coordinates and redraw the canvas
@@ -244,6 +263,8 @@ class CubicBezierCurve {
         this.ctrl2 = ctrl2; // control point for end point
         this.selectedPoint = null; // keep track of a selected Point
         this.saved = false; // saved curves can no longer be modified and their control points will be hidden
+        this.active = false; // draw only control points of selectd curve, curves are selected by clickin on their path
+        this.path = new Path2D();
 
         // draw curve on canvas: draw squares around all existing points and lines
         // between points and their control points and the cubic bezier curve between
@@ -257,7 +278,7 @@ class CubicBezierCurve {
             if (self.start){
                 self.start.drawSquare(context);
             }
-            if (self.ctrl1 && !self.saved){ // if curve is saved do not draw control points
+            if (self.ctrl1 && !self.saved && self.active){ // if curve is saved or inactive do not draw control points
                 context.save();
                 context.globalAlpha = 0.4;
                 context.beginPath();
@@ -270,7 +291,7 @@ class CubicBezierCurve {
             if (self.end){
                 self.end.drawSquare(context);
             }
-            if (self.ctrl2 && !self.saved){ // if curve is saved do not draw control points
+            if (self.ctrl2 && !self.saved && self.active){ // if curve is saved or inactive do not draw control points
                 context.save();
                 context.globalAlpha = 0.4;
                 context.beginPath();
@@ -310,7 +331,16 @@ class CubicBezierCurve {
             self.ctrl2 = ctrl2;
         };
 
-        // does user clicked on one of the points if the curve?
+        // once all points are set, create the paht object
+        this.createPath = function(){
+            if (self.start && self.end && self.ctrl1 && self.ctrl2){
+                self.path = new Path2D();
+                self.path.moveTo(self.start.x, self.start.y);
+                self.path.bezierCurveTo(self.ctrl1.x, self.ctrl1.y, self.ctrl2.x, self.ctrl2.y, self.end.x, self.end.y);
+            }
+        };
+
+        // does user clicked on one of the points of the curve?
         this.contains = function(point){
             if (self.saved){ // curve is saved it can no longer be selected
                 return false;
@@ -318,13 +348,13 @@ class CubicBezierCurve {
             if(self.start && self.start.intersect(point)){
                 self.selectedPoint = self.start;
                 return true;
-            } else if (self.ctrl1 && self.ctrl1.intersect(point)){
+            } else if (self.ctrl1 && self.active && self.ctrl1.intersect(point)){
                 self.selectedPoint = self.ctrl1;
                 return true;
             } else if (self.end && self.end.intersect(point)){
                 self.selectedPoint = self.end;
                 return true;
-            } else if (self.ctrl2 && self.ctrl2.intersect(point)){
+            } else if (self.ctrl2 && self.active && self.ctrl2.intersect(point)){
                 self.selectedPoint = self.ctrl2;
                 return true;
             } else {
@@ -348,14 +378,40 @@ class CubicBezierCurve {
             }
         };
 
+        // does the user clicked on the curve? if yes toggle its active state
+        this.curveClicked = function(point, context){
+            if (!self.saved){ // only unsaved curves can be selected
+                if (context.isPointInStroke(self.path, point.x, point.y)){
+                    self.active = !self.active;
+                }
+            }
+        };
+
         // update point that user draggs around
         this.updateSelectedPoint = function(newPos){
             self.selectedPoint.set(newPos.x, newPos.y);
+            // recreate path with new coordinates
+            self.createPath();
         };
 
         // is curve saved
         this.isSaved = function(){
             return self.saved;
+        };
+
+        // is curve active
+        this.isActive = function(){
+            return self.active;
+        };
+
+        // set active state of curve to true
+        this.activate = function(){
+            self.active = true;
+        };
+
+        // set active state of curve to false
+        this.deactivate = function(){
+            self.active = false;
         };
 
         // save the curve this means it can no longer be manipulated
