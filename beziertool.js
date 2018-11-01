@@ -6,6 +6,9 @@ class Beziertool{
         this.canvas = canvas;
         this.canvas.width = width || 500; // default width 500
         this.canvas.height = height || 500; // default height 500
+        this.originalWidth = width || 500;
+        this.originalHeight = height || 500;
+        this.scaleFactor = 1;
         this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
         this.context = canvas.getContext('2d'); 
         this.context.strokeStyle = color || 'rgba(0,0,0,1)'; //default color black
@@ -19,11 +22,11 @@ class Beziertool{
         this.isSecondPoint = false; // flag if next point added to canvas will be seconPoint of a curve
         this.moving = false; //flag if mouse is currently moving
 
-        // calculate position of cursor relative to canvas
+        // calculateeditor.php?image=1&group=0&collection=10&annotation=false&page=0 position of cursor relative to canvas
         this.getCursorPosition = function(event){
             var rect = self.canvas.getBoundingClientRect();
-            var x = event.clientX - rect.left;
-            var y = event.clientY - rect.top;
+            var x = (event.clientX - rect.left) / self.scaleFactor;
+            var y = (event.clientY - rect.top) / self.scaleFactor;
             return new Point(x, y);
         };
 
@@ -32,6 +35,8 @@ class Beziertool{
         // when user presses left mousebutton either a new point is added or if there
         // is a point at this location this point is marked as selected and can now be moved
         this.handleMouseDown = function(event){
+            event.preventDefault();
+            event.stopPropagation();
             switch (event.which) {
             case 1: // left button was pressed
                 self.handleLeftButtonDown(event);
@@ -43,6 +48,8 @@ class Beziertool{
 
         //when user holds left mouse buttion over a point this point is moved around
         this.handleMouseMove = function(event){
+            event.preventDefault();
+            event.stopPropagation();
             if (self.moving){
                 var pt = self.getCursorPosition(event);
                 self.updateSelectedPoint(pt);
@@ -50,8 +57,10 @@ class Beziertool{
             }
         };
 
-        //when user releases left mouse button selected point is unselected
+        //when user releases left mouse button unselect selected points and curves
         this.handleMouseUp = function(event){
+            event.preventDefault();
+            event.stopPropagation();
             self.moving = false;
             if (self.selectedCurves.length > 0){
                 for (var i = 0; i < self.selectedCurves.length; i ++){
@@ -82,7 +91,6 @@ class Beziertool{
             if (!self.isSecondPoint){ // starting Point of a new curve
                 var curve = new CubicBezierCurve();
                 curve.setStart(pt);
-                curve.drawCurve(self.context);
                 self.bezierCurves.push(curve);
             }else { // ending point of current curve
                 var currCurve = self.bezierCurves[self.bezierCurves.length - 1];
@@ -96,10 +104,10 @@ class Beziertool{
                 var ctrl2 = new Point((currCurve.end.x + delta.x * scale), (currCurve.end.y + delta.y * scale));
                 currCurve.setCtrl1(ctrl1);
                 currCurve.setCtrl2(ctrl2);
-                currCurve.drawCurve(self.context);
                 currCurve.createPath();
             }
             self.isSecondPoint = !self.isSecondPoint;
+            self.render();
         };
 
         // If user clicked onto an existing point this point should move
@@ -133,9 +141,14 @@ class Beziertool{
         // clear the canvas and redraw all curves
         this.render = function(){
             self.clear();
+            // set scale factor so everything is drawn in correct size
+            self.context.scale(self.scaleFactor, self.scaleFactor);
             for (var i = 0; i < self.bezierCurves.length; i++){
                 self.bezierCurves[i].drawCurve(self.context);
             }
+            // reset scaling to normal otherwise scale factors multiply
+            // scale(2,2) followed by scale(2,2) is equivalent to scale(4,4)
+            self.context.setTransform(1, 0, 0, 1, 0, 0);
         };
 
         // is there a point at the location currently clicked on? And if so mark this point
@@ -213,6 +226,13 @@ class Beziertool{
                 }
             }
             // curves changed, render everything
+            self.render();
+        };
+
+        this.rescaleAll = function(scaleFactor){
+            self.scaleFactor = scaleFactor;
+            self.canvas.width = self.originalWidth * scaleFactor;
+            self.canvas.height = self.originalHeight * scaleFactor;
             self.render();
         };
 

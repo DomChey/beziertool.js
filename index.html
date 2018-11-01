@@ -6,6 +6,16 @@
 </head>
 
 <body>
+    <div id="selectContainer">
+        Zoom:
+        <select id="zoom" autocomplete="off">
+            <option value="100">100%</option>
+            <option value="125">125%</option>
+            <option value="150">150%</option>
+            <option value="175">175%</option>
+            <option value="200">200%</option>
+        </select>
+    </div>
     <div id="containter">
         <canvas id="canvas"style="border: 1px solid black;"></canvas>
     </div>
@@ -25,6 +35,26 @@
          var saveButton = document.getElementById('saveCurves');
          saveButton.addEventListener("click", function(){
              beziertool.saveAllUnsavedCurves();
+         });
+         var zoomBox = document.getElementById('zoom');
+         zoomBox.addEventListener("change", function(){
+             switch (zoomBox.value){
+                 case "100":
+                     beziertool.rescaleAll(1);
+                     break;
+                 case "125":
+                     beziertool.rescaleAll(1.25);
+                     break;
+                 case "150":
+                     beziertool.rescaleAll(1.5);
+                     break;
+                 case "175":
+                     beziertool.rescaleAll(1.75);
+                     break;
+                 case "200":
+                     beziertool.rescaleAll(2);
+                     break;
+             }
          });
      }
      document.onreadystatechange = function(){
