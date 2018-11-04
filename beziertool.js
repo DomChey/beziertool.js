@@ -231,10 +231,16 @@ class Beziertool{
 
         this.rescaleAll = function(scaleFactor){
             self.scaleFactor = scaleFactor;
+            // save strokeStyle and fillStyle separately since resizing of the canvas resets the canvas context
+            // and therefore the saving and restoring method of the context can not be used
+            var strokeStyle = self.context.strokeStyle;
+            var fillStyle = self.context.fillStyle;
             self.canvas.width = self.originalWidth * scaleFactor;
             self.canvas.height = self.originalHeight * scaleFactor;
+            self.context.strokeStyle = strokeStyle;
+            self.context.fillStyle = fillStyle;
             self.render();
-        };
+        }; 
 
     }
 }
