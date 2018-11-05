@@ -27,7 +27,7 @@
 
      function bindEventListeners(){
          var canvas = document.getElementById('canvas');
-         var beziertool = new Beziertool(canvas, 500, 500, 'lightblue');
+         var beziertool = new Beziertool(canvas, 500, 500, 'lightblue', 3);
          var undoButton = document.getElementById('undoLastPoint');
          undoButton.addEventListener("click", function(){
              beziertool.deleteLatestPoint();

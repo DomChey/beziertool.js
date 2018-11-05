@@ -1,5 +1,5 @@
 class Beziertool{
-    constructor(canvas, width, height, color){
+    constructor(canvas, width, height, color, strokeWidth){
         // helpfull declaration since this changes when scope changes
         const self = this;
         // initialize Beziertool
@@ -13,7 +13,7 @@ class Beziertool{
         this.context = canvas.getContext('2d'); 
         this.context.strokeStyle = color || 'rgba(0,0,0,1)'; //default color black
         this.context.fillStyle = color || 'rgba(0,0,0,1)';
-        this.context.lineWidth = 2;
+        this.context.lineWidth = strokeWidth || 2;
         this.bezierCurves = []; // keep track of all curves drawn on canvas
         this.allPoints = [];  //keep track of all points drawn on canvas
         this.selectedCurves = []; // keep track of curves that are manipulated by dragging their points
@@ -22,7 +22,7 @@ class Beziertool{
         this.isSecondPoint = false; // flag if next point added to canvas will be seconPoint of a curve
         this.moving = false; //flag if mouse is currently moving
 
-        // calculateeditor.php?image=1&group=0&collection=10&annotation=false&page=0 position of cursor relative to canvas
+        // calculate position of cursor relative to canvas
         this.getCursorPosition = function(event){
             var rect = self.canvas.getBoundingClientRect();
             var x = (event.clientX - rect.left) / self.scaleFactor;
@@ -231,14 +231,16 @@ class Beziertool{
 
         this.rescaleAll = function(scaleFactor){
             self.scaleFactor = scaleFactor;
-            // save strokeStyle and fillStyle separately since resizing of the canvas resets the canvas context
+            // save strokeStyle, fillStyle and lineWidth separately since resizing of the canvas resets the canvas context
             // and therefore the saving and restoring method of the context can not be used
             var strokeStyle = self.context.strokeStyle;
             var fillStyle = self.context.fillStyle;
+            var lineWidth = self.context.lineWidth;
             self.canvas.width = self.originalWidth * scaleFactor;
             self.canvas.height = self.originalHeight * scaleFactor;
             self.context.strokeStyle = strokeStyle;
             self.context.fillStyle = fillStyle;
+            self.context.lineWidth = lineWidth;
             self.render();
         }; 
 
