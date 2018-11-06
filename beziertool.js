@@ -1,5 +1,5 @@
 class Beziertool{
-    constructor(canvas, width, height, color, strokeWidth){
+    constructor(canvas, width, height, color, strokeWidth, minDist){
         // helpfull declaration since this changes when scope changes
         const self = this;
         // initialize Beziertool
@@ -9,6 +9,7 @@ class Beziertool{
         this.originalWidth = width || 500;
         this.originalHeight = height || 500;
         this.scaleFactor = 1;
+        this.minDist = minDist || 10; // minimal distance between two points to create a line between them
         this.canvas.style.cursor = 'crosshair'; // set cursor style to crosshair
         this.context = canvas.getContext('2d'); 
         this.context.strokeStyle = color || 'rgba(0,0,0,1)'; //default color black
@@ -94,6 +95,11 @@ class Beziertool{
                 self.bezierCurves.push(curve);
             }else { // ending point of current curve
                 var currCurve = self.bezierCurves[self.bezierCurves.length - 1];
+                // get dist between new point and start of curr curve
+                var dist = self.calculateEuclidDist(pt, currCurve.start);
+                if (!(dist >= self.minDist)){ // point is too close do not create line
+                    return;
+                }
                 currCurve.setEnd(pt);
                 // calculate vector pointing from start to end 
                 var delta = self.calculateDelta(currCurve.start, currCurve.end);
@@ -242,7 +248,11 @@ class Beziertool{
             self.context.fillStyle = fillStyle;
             self.context.lineWidth = lineWidth;
             self.render();
-        }; 
+        };
+
+        this.calculateEuclidDist = function(pt1, pt2){
+            return Math.sqrt(Math.pow((pt1.x - pt2.x), 2) + Math.pow((pt1.y - pt2.y), 2));
+        };
 
     }
 }
